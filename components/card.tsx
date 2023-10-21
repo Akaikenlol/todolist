@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Check from "./check";
+import Check from "../components/check";
 import Image from "next/image";
-import Warning from "./warning";
+import Warning from "../components/warning";
+import axios from "axios";
+import { PrismaClient } from "@prisma/client";
 
 type Task = {
 	name: string;
@@ -14,31 +16,37 @@ const Card = () => {
 	const [userInput, setUserInput] = useState("");
 	const [todoList, setTodoList] = useState<Task[]>([]);
 	const [displayWarning, setDisplayWarning] = useState(false);
+	const [errors, setErrors] = useState([]);
+	const [prismaDB, setPrismaDB] = useState([]);
 
-	// const addItem = (e: React.FormEvent) => {
-	// 	e.preventDefault();
-	// 	const trimmedUserInput = userInput.trim();
-	// 	if (trimmedUserInput) {
-	// 		setTodoList((existingItems) => [
-	// 			...existingItems,
-	// 			{ name: trimmedUserInput, finished: false },
-	// 		]);
-	// 		setUserInput("");
-	// 	}
-	// };
+	const fetchData = async () => {
+		// const prisma = new PrismaClient();
+		try {
+			const response = await axios.get("/api/tasks");
+			setTodoList(response.data);
+		} catch (error: any) {
+			console.error(error);
+		}
+	};
 
-	const addItem = (e: React.FormEvent) => {
+	const addItem = async (e: React.FormEvent) => {
 		e.preventDefault();
 		const trimmedUserInput = userInput.trim();
 
 		if (trimmedUserInput) {
 			const maxItems = 6;
 			if (todoList.length < maxItems) {
-				setTodoList((existingItems) => [
-					...existingItems,
-					{ name: trimmedUserInput, finished: false },
-				]);
-				setUserInput("");
+				try {
+					const response = await axios.post("/api/addtask", {
+						title: trimmedUserInput,
+						finished: false,
+					});
+					setTodoList((existingItems) => [...existingItems, response.data]);
+					setUserInput("");
+				} catch (error: any) {
+					console.error(error);
+					setErrors(error);
+				}
 			} else {
 				setDisplayWarning(true);
 			}
@@ -72,7 +80,9 @@ const Card = () => {
 		}
 	};
 
-	useEffect(() => {}, [todoList]);
+	useEffect(() => {
+		fetchData();
+	}, []);
 
 	return (
 		<div className="flex justify-center items-center">
@@ -86,17 +96,16 @@ const Card = () => {
 						placeholder="Add a text..."
 						className="outline-none bg-transparent w-[350px] p-2 "
 						value={userInput}
-						// onChange={(e) => setUserInput(e.target.value)}
 						maxLength={30}
 						onChange={handleInput}
 					/>
-					<button className=" rounded-md p-2 bg-transparent hover:bg-emerald-300 ease-in-out duration-300">
+					<button className="rounded-md p-2 bg-transparent hover:bg-emerald-300 ease-in-out duration-300">
 						<Image
 							src="/assets/plus.png"
 							alt="search"
 							width={25}
 							height={25}
-							className=" object-cover outline-none"
+							className="object-cover outline-none"
 						/>
 					</button>
 				</form>
