@@ -8,7 +8,8 @@ import axios from "axios";
 import { PrismaClient } from "@prisma/client";
 
 type Task = {
-	name: string;
+	title: string;
+	// name: string;
 	finished: boolean;
 };
 
@@ -17,15 +18,15 @@ const Card = () => {
 	const [todoList, setTodoList] = useState<Task[]>([]);
 	const [displayWarning, setDisplayWarning] = useState(false);
 	const [errors, setErrors] = useState([]);
-	const [prismaDB, setPrismaDB] = useState([]);
+	const [prismaDB, setPrismaDB] = useState<Task[]>([]);
 
 	const fetchData = async () => {
-		// const prisma = new PrismaClient();
+		const prisma = new PrismaClient();
 		try {
-			const response = await axios.get("/api/tasks");
-			setTodoList(response.data);
+			const tasks = await prisma.task.findMany();
+			setPrismaDB(tasks);
 		} catch (error: any) {
-			console.error(error);
+			console.log("Error fetching prisma data", error);
 		}
 	};
 
@@ -109,7 +110,7 @@ const Card = () => {
 						/>
 					</button>
 				</form>
-				<div className="">
+				{/* <div className="">
 					{todoList.map(
 						(item, index) =>
 							!item.finished && (
@@ -122,6 +123,13 @@ const Card = () => {
 								/>
 							)
 					)}
+				</div> */}
+				<div>
+					{prismaDB.map((item, indx) => (
+						<div key={indx}>
+							<span>{item.title}</span>
+						</div>
+					))}
 				</div>
 				{displayWarning && <Warning />}
 			</div>
